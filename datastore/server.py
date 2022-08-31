@@ -55,7 +55,7 @@ def start_server():
         lsock.bind((HOST, PORT))
     except Exception as exc:
         logger.error(exc)
-        os.exit(1)
+        os._exit(1)
 
     lsock.listen()
 
