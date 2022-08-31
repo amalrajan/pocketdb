@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Union
 
+from logzero import logger
+
 
 @dataclass
 class StreamExpression(object):
@@ -19,6 +21,9 @@ class Cache(object):
         :type key: str
         :rtype: Union[None, str]
         """
+        if key not in self.dict:
+            logger.debug(f'Key not found: {key}')
+
         return self.dict.get(key, None)
 
     def set_item(self, key: str, value: str) -> None:
@@ -28,6 +33,13 @@ class Cache(object):
         :type value: str
         :rtype: None
         """
+        if key in self.dict:
+            logger.debug(
+                f'Updating {key} with '
+                ' {self.dict.get(key)} -> {value}',
+            )
+        else:
+            logger.debug(f'Seting {key} -> {value}')
         self.dict[key] = value
 
     def delete_item(self, key: str) -> Union[None, str]:
@@ -36,6 +48,12 @@ class Cache(object):
         :type key: str
         :rtype: Union[None, str]
         """
+        if key not in self.dict:
+            logger.debug(f'Key not found: {key}')
+        else:
+            logger.debug(
+                f'Deleting {key} -> {self.dict[key]}',
+            )
         return self.dict.pop(key, None)
 
 
@@ -46,11 +64,14 @@ def validate_expression(expr: StreamExpression) -> bool:
     :rtype: bool
     """
     if expr.operator not in {'GET', 'SET', 'DELETE'}:
+        logger.error(f'Invalid operator: {expr.operator}')
         return False
 
     if expr.operator in {'GET', 'DELETE'} and expr.second_operand is not None:
+        logger.error('Too many values to unpack. Expected 1, found 2')
         return False
     elif expr.operator == 'SET' and expr.second_operand is None:
+        logger.error('Not enough values to unpack. Expected 2, found 1')
         return False
 
     return True
@@ -87,8 +108,7 @@ def parse_input(request_str: str) -> Union[bool, None, str]:
     )
 
     if not validate_expression(expression):
-        print(expression)
-        print('Invalid expression')
+        logger.error(f'Invalid expression: {expression}')
         return False
 
     return evaluate_expression(

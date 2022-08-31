@@ -1,8 +1,10 @@
+import os
 import selectors
 import socket
 import types
 
 from controller import parse_input
+from logzero import logger
 
 
 def accept_wrapper(sock: socket.socket) -> None:
@@ -11,7 +13,8 @@ def accept_wrapper(sock: socket.socket) -> None:
     :type sock: socket.socket
     """
     conn, addr = sock.accept()
-    print(f'Accepted connection from {addr}')
+    ip, port = addr
+    logger.warn(f'Accepted connection from {ip}:{port}')
     conn.setblocking(False)
 
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
@@ -34,24 +37,29 @@ def service_connection(key: selectors.SelectorKey, mask: int) -> None:
         if recv_data:
             data.outb += recv_data
         else:
-            print(f'Closing connection to {data.addr}')
+            logger.warn(f'Closing connection to {data.addr}')
             sel.unregister(sock)
             sock.close()
 
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             data.outb = str.encode(str(parse_input(data.outb)))
-            print(f'Echoing {data.outb!r} to {data.addr}')
             sent = sock.send(data.outb)
             data.outb = data.outb[sent:]
 
 
 def start_server():
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    lsock.bind((HOST, PORT))
+
+    try:
+        lsock.bind((HOST, PORT))
+    except Exception as exc:
+        logger.error(exc)
+        os.exit(1)
+
     lsock.listen()
 
-    print(f'Listening on {HOST, PORT}')
+    logger.warn(f'Listening on {HOST}:{PORT}')
 
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
@@ -65,7 +73,7 @@ def start_server():
                 else:
                     service_connection(key, mask)
     except KeyboardInterrupt:
-        print('Caught keyboard interrupt, exiting')
+        logger.error('Caught keyboard interrupt, exiting')
     finally:
         sel.close()
 
