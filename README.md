@@ -7,7 +7,7 @@ docker build -t datastore:latest -f Dockerfile .
 docker run -it -d --name datastore -p 8080:8080 datastore:latest
 ```
 
-# To start client
+### To start client
 ```
 python3 client.py
 ```
