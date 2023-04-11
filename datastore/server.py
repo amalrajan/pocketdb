@@ -14,10 +14,10 @@ def accept_wrapper(sock: socket.socket) -> None:
     """
     conn, addr = sock.accept()
     ip, port = addr
-    logger.warn(f'Accepted connection from {ip}:{port}')
+    logger.warn(f"Accepted connection from {ip}:{port}")
     conn.setblocking(False)
 
-    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
 
     sel.register(conn, events, data=data)
@@ -37,7 +37,7 @@ def service_connection(key: selectors.SelectorKey, mask: int) -> None:
         if recv_data:
             data.outb += recv_data
         else:
-            logger.warn(f'Closing connection to {data.addr}')
+            logger.warn(f"Closing connection to {data.addr}")
             sel.unregister(sock)
             sock.close()
 
@@ -59,7 +59,7 @@ def start_server():
 
     lsock.listen()
 
-    logger.warn(f'Listening on {HOST}:{PORT}')
+    logger.warn(f"Listening on {HOST}:{PORT}")
 
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
@@ -73,12 +73,12 @@ def start_server():
                 else:
                     service_connection(key, mask)
     except KeyboardInterrupt:
-        logger.error('Caught keyboard interrupt, exiting')
+        logger.error("Caught keyboard interrupt, exiting")
     finally:
         sel.close()
 
 
 sel = selectors.DefaultSelector()
 
-HOST = '127.0.0.1'
-PORT = 65432
+HOST = "0.0.0.0"
+PORT = 8080
