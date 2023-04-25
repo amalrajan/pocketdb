@@ -1,5 +1,5 @@
 # Datastore
-Socket based key value data store, just like Redis, but not quite there yet. 
+Socket based key value data store, just like Redis
 
 ## Installation
 ```
